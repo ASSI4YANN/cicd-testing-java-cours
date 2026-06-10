@@ -17,6 +17,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
+import java.time.Duration;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class MultiplicationJourneyE2ETest {
@@ -29,12 +30,12 @@ public class MultiplicationJourneyE2ETest {
 
   @BeforeAll
   static void setUpFireFoxDriver() {
-    WebDriverManager.firefoxdriver().setup();
+    WebDriverManager.chromedriver().setup();
   }
 
   @BeforeEach
   void setUpWebDriver() {
-    webDriver = new FirefoxDriver();
+    webDriver = new ChromeDriver();
     baseUrl = "http://localhost:" + port + "/calculator";
 
   }
@@ -63,7 +64,8 @@ public class MultiplicationJourneyE2ETest {
     submitButton.click();
 
     //THEN
-    WebDriverWait waiter = new WebDriverWait(webDriver,5);
+    WebDriverWait waiter =
+            new WebDriverWait(webDriver, Duration.ofSeconds(5));
     WebElement solutionElement = waiter.until(ExpectedConditions.presenceOfElementLocated(By.id("solution")));
     String solution = solutionElement.getText();
     assertThat(solution).isEqualTo("32");
