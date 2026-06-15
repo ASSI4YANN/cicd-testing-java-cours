@@ -36,6 +36,17 @@ node {
         stage("Image Prune") {
             imagePrune(CONTAINER_NAME)
         }
+        stage('Docker Debug') {
+            steps {
+                sh '''
+                echo "=== Docker Version ==="
+                docker version
+
+                echo "=== Docker Environment ==="
+                env | grep DOCKER || true
+                '''
+            }
+        }
 
         stage('Image Build') {
             imageBuild(CONTAINER_NAME, CONTAINER_TAG)
