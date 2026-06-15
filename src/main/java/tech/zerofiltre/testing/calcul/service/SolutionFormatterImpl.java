@@ -1,14 +1,21 @@
 package tech.zerofiltre.testing.calcul.service;
 
-import java.util.Locale;
-
 import javax.inject.Named;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 @Named
 public class SolutionFormatterImpl implements SolutionFormatter {
 
 	@Override
 	public String format(int solution) {
-		return String.format(Locale.FRENCH, "%,d", solution);
+		DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+
+		// IMPORTANT: espace insécable standard attendu par ton test
+		symbols.setGroupingSeparator('\u00A0');
+
+		DecimalFormat formatter = new DecimalFormat("#,###", symbols);
+
+		return formatter.format(solution);
 	}
 }

@@ -3,19 +3,18 @@ package tech.zerofiltre.testing.calcul.e2e;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
+
+import java.time.Duration;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class MultiplicationJourneyE2E {
@@ -27,15 +26,14 @@ class MultiplicationJourneyE2E {
   private String baseUrl;
 
   @BeforeAll
-  static void setUpFireFoxDriver() {
-    WebDriverManager.firefoxdriver().setup();
+  static void setUpChromeDriver() {
+    WebDriverManager.chromedriver().setup();
   }
 
   @BeforeEach
   void setUpWebDriver() {
-    webDriver = new FirefoxDriver();
+    webDriver = new ChromeDriver();
     baseUrl = "http://localhost:" + port + "/calculator";
-
   }
 
   @AfterEach
@@ -48,25 +46,23 @@ class MultiplicationJourneyE2E {
   @Test
   void multiplyTwoBySixteenMustReturn32() {
 
-    //GIVEN
     webDriver.get(baseUrl);
+
     WebElement leftField = webDriver.findElement(By.id("left"));
     WebElement typeDropDown = webDriver.findElement(By.id("type"));
     WebElement rightField = webDriver.findElement(By.id("right"));
     WebElement submitButton = webDriver.findElement(By.id("submit"));
 
-    //WHEN
     leftField.sendKeys("2");
     typeDropDown.sendKeys("x");
     rightField.sendKeys("16");
     submitButton.click();
 
-    //THEN
-    WebDriverWait waiter = new WebDriverWait(webDriver, 5);
-    WebElement solutionElement = waiter.until(ExpectedConditions.presenceOfElementLocated(By.id("solution")));
-    String solution = solutionElement.getText();
-    assertThat(solution).isEqualTo("32");
+    WebDriverWait waiter = new WebDriverWait(webDriver, Duration.ofSeconds(5));
+
+    WebElement solutionElement =
+            waiter.until(ExpectedConditions.presenceOfElementLocated(By.id("solution")));
+
+    assertThat(solutionElement.getText()).isEqualTo("32");
   }
-
-
 }
