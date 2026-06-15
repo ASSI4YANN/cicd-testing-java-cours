@@ -18,9 +18,7 @@ node {
         }
 
         stage('Build with test') {
-
-            def mavenHome = tool 'mavenlatest'
-                sh "${mavenHome}/bin/mvn clean install"
+                sh "mvn clean install"
         }
 
         stage('Sonarqube Analysis') {
