@@ -37,13 +37,11 @@ node {
             imagePrune(CONTAINER_NAME)
         }
         stage('Check Docker Binary') {
-            steps {
-                sh '''
-                which docker
-                ls -l $(which docker)
-                docker version
-                '''
-            }
+            sh '''
+            which docker
+            ls -l $(which docker)
+            docker version
+            '''
         }
 
         stage('Image Build') {
