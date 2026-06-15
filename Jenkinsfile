@@ -36,7 +36,15 @@ node {
         stage("Image Prune") {
             imagePrune(CONTAINER_NAME)
         }
-
+        stage('Check Docker Binary') {
+            steps {
+                sh '''
+                which docker
+                ls -l $(which docker)
+                docker version
+                '''
+            }
+        }
 
         stage('Image Build') {
             imageBuild(CONTAINER_NAME, CONTAINER_TAG)
