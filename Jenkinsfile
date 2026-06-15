@@ -79,7 +79,7 @@ def imagePrune(containerName) {
 
 
 def imageBuild(containerName, tag) {
-    sh '/usr/bin/docker build -t calculator-dev:19-stable --pull --no-cache .'
+    sh "docker build -t $containerName:$tag --pull --no-cache ."
     echo "Image build complete"
 }
 
