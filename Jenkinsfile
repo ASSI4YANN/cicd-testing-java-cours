@@ -39,11 +39,14 @@ node {
         stage('Docker Debug') {
             steps {
                 sh '''
-                echo "=== Docker Version ==="
-                docker version
+                echo "===== Docker Version ====="
+                docker version || true
 
-                echo "=== Docker Environment ==="
+                echo "===== Docker Env ====="
                 env | grep DOCKER || true
+
+                echo "===== Docker Binary ====="
+                which docker || true
                 '''
             }
         }
