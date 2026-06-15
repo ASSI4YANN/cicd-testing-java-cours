@@ -36,12 +36,6 @@ node {
         stage("Image Prune") {
             imagePrune(CONTAINER_NAME)
         }
-        stage('Check Docker') {
-             sh '''
-                which docker
-                docker version
-                '''
-        }
 
         stage('Image Build') {
             imageBuild(CONTAINER_NAME, CONTAINER_TAG)
