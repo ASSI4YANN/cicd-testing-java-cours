@@ -8,6 +8,7 @@
 	<properties>
 		<dep.junit.version>5.5.2</dep.junit.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!--Ajout 14/06/2026--><project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
 		<bootstrap.version>4.3.1</bootstrap.version>
@@ -80,12 +81,18 @@
 		<dependency>
 			<groupId>io.github.bonigarcia</groupId>
 			<artifactId>webdrivermanager</artifactId>
-			<version>3.7.1</version>
+			<version>5.9.2</version>
 		</dependency>
 	</dependencies>
 	<build>
 		<finalName>calculator</finalName>
 		<plugins>
+			<!-- ICI tu ajoutes Sonar -->
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>5.7.0.6970</version>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -103,9 +110,9 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.2</version>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.8.12</version>
 				<executions>
 					<execution>
 						<goals>
