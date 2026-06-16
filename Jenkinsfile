@@ -1,8 +1,9 @@
 def ENV_NAME = getEnvName(env.BRANCH_NAME)
-def CONTAINER_NAME = "calculator-" + ENV_NAME
+def CONTAINER_NAME = "calculator-" +ENV_NAME
 def CONTAINER_TAG = getTag(env.BUILD_NUMBER, env.BRANCH_NAME)
 def HTTP_PORT = getHTTPPort(env.BRANCH_NAME)
 def EMAIL_RECIPIENTS = "nassiyannjunior@gmail.com"
+
 
 node {
     try {
@@ -23,7 +24,7 @@ node {
 
         stage('Sonarqube Analysis') {
             withSonarQubeEnv('localhost_sonarqube') {
-                sh "mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
+                sh " mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
             }
 
             timeout(time: 1, unit: 'MINUTES') {
@@ -48,11 +49,11 @@ node {
                                               passwordVariable: 'PASSWORD')]) {
 
                 sh '''
-                    echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
+                echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
                 '''
 
                 sh '''
-                    docker push $USERNAME/''' + CONTAINER_NAME + ':' + CONTAINER_TAG + '''
+                docker push $USERNAME/''' + CONTAINER_NAME + ':' + CONTAINER_TAG + '''
                 '''
             }
         }
@@ -70,4 +71,85 @@ node {
         deleteDir()
         sendEmail(EMAIL_RECIPIENTS)
     }
+}
+
+
+
+def imagePrune(containerName) {
+    try {
+            sh "docker image prune -f"
+            sh "docker stop $containerName"
+    } catch (ignored) {
+    }
+}
+
+
+ imageBuild(containerName, tag, dockerHubUser) {
+    def image = "${dockerHubUser}/${containerName}:${tag}"
+
+    sh "docker build -t $image --pull --no-cache ."
+
+    echo "Image built: $image"
+}
+
+def pushToImage(containerName, tag, dockerUser, dockerPassword) {
+
+    def image = "${dockerUser}/${containerName}:${tag}"
+
+    sh """
+        echo "$dockerPassword" | docker login -u "$dockerUser" --password-stdin
+    """
+
+    sh """
+        docker push $image
+    """
+
+    echo "Image push complete: $image"
+}
+
+def runApp(containerName, tag, dockerHubUser, httpPort, envName) {
+
+     def image = "${dockerHubUser}/${containerName}:${tag}"
+
+     sh "docker pull $image"
+
+     sh """
+         docker rm -f $containerName || true
+
+         docker run -d \
+         --name $containerName \
+         -p $httpPort:$httpPort \
+         -e SPRING_PROFILES_ACTIVE=$envName \
+         $image
+     """
+
+     echo "Application started: $image on port $httpPort"
+ }
+
+def sendEmail(recipients) {
+    mail(
+            to: recipients,
+            subject: "Build ${env.BUILD_NUMBER} - ${currentBuild.currentResult} - (${currentBuild.fullDisplayName})",
+            body: "Check console output at: ${env.BUILD_URL}/console" + "\n")
+}
+
+String getEnvName(String branchName) {
+    if (branchName == 'main') {
+        return 'prod'
+    }
+    return (branchName == 'develop') ? 'uat' : 'dev'
+}
+
+String getHTTPPort(String branchName) {
+    if (branchName == 'main') {
+        return '9003'
+    }
+    return (branchName == 'develop') ? '9002' : '9001'
+}
+
+String getTag(String buildNumber, String branchName) {
+    if (branchName == 'main') {
+        return buildNumber + '-unstable'
+    }
+    return buildNumber + '-stable'
 }
