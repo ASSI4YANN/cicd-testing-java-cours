@@ -142,7 +142,7 @@ String getEnvName(String branchName) {
 }
 
 String getHTTPPort(String branchName) {
-    if (branchName == 'main') {
+    if (branchName == 'master') {
         return '9003'
     }
     return (branchName == 'develop') ? '9002' : '9001'
