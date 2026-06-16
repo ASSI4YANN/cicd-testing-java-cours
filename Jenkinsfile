@@ -37,19 +37,12 @@ node {
             imagePrune(CONTAINER_NAME)
         }
 
+
         stage('Image Build') {
-            imageBuild(CONTAINER_NAME, CONTAINER_TAG)
+            imageBuild(CONTAINER_NAME, CONTAINER_TAG, USERNAME)
         }
 
         stage('Push to Docker Registry') {
-            withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                sh '''
-                docker login -u "$USERNAME" -p "$PASSWORD"
-                '''
-            }
-    }
-
-        stage('Run App') {
             withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials',
                                               usernameVariable: 'USERNAME',
                                               passwordVariable: 'PASSWORD')]) {
@@ -57,6 +50,18 @@ node {
                 sh '''
                     echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
                 '''
+
+                sh '''
+                    docker push $USERNAME/''' + CONTAINER_NAME + ':' + CONTAINER_TAG + '''
+                '''
+            }
+        }
+    }
+
+        stage('Run App') {
+            withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials',
+                                              usernameVariable: 'USERNAME',
+                                              passwordVariable: 'PASSWORD')]) {
 
                 runApp(CONTAINER_NAME, CONTAINER_TAG, USERNAME, HTTP_PORT, ENV_NAME)
             }
@@ -78,37 +83,47 @@ def imagePrune(containerName) {
 }
 
 
-def imageBuild(containerName, tag) {
-    sh "docker build -t $containerName:$tag --pull --no-cache ."
-    echo "Image build complete"
+ imageBuild(containerName, tag, dockerHubUser) {
+    def image = "${dockerHubUser}/${containerName}:${tag}"
+
+    sh "docker build -t $image --pull --no-cache ."
+
+    echo "Image built: $image"
 }
 
 def pushToImage(containerName, tag, dockerUser, dockerPassword) {
-    sh "docker login -u $dockerUser -p $dockerPassword"
-    sh "docker tag $containerName:$tag $dockerUser/$containerName:$tag"
-    sh "docker push $dockerUser/$containerName:$tag"
-    echo "Image push complete"
+
+    def image = "${dockerUser}/${containerName}:${tag}"
+
+    sh """
+        echo "$dockerPassword" | docker login -u "$dockerUser" --password-stdin
+    """
+
+    sh """
+        docker push $image
+    """
+
+    echo "Image push complete: $image"
 }
 
 def runApp(containerName, tag, dockerHubUser, httpPort, envName) {
 
-    def image = dockerHubUser + "/" + containerName + ":" + tag
+     def image = "${dockerHubUser}/${containerName}:${tag}"
 
-    sh '''
-        docker pull ''' + image + '''
-    '''
+     sh "docker pull $image"
 
-    sh '''
-        docker run --rm \
-        --env SPRING_ACTIVE_PROFILES=''' + envName + ''' \
-        -d \
-        -p ''' + httpPort + ':' + httpPort + ''' \
-        --name ''' + containerName + ''' \
-        ''' + image + '''
-    '''
+     sh """
+         docker rm -f $containerName || true
 
-    echo "Application started on port: ${httpPort} (http)"
-}
+         docker run -d \
+         --name $containerName \
+         -p $httpPort:$httpPort \
+         -e SPRING_PROFILES_ACTIVE=$envName \
+         $image
+     """
+
+     echo "Application started: $image on port $httpPort"
+ }
 
 def sendEmail(recipients) {
     mail(
