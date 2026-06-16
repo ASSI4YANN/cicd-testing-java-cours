@@ -47,6 +47,7 @@ node {
                 docker login -u "$USERNAME" -p "$PASSWORD"
                 '''
             }
+    }
 
         stage('Run App') {
             withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
