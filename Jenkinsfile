@@ -62,7 +62,6 @@ node {
                 '''
             }
         }
-
         stage('Run App') {
             withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials',
                                               usernameVariable: 'USERNAME',
@@ -71,7 +70,6 @@ node {
                 runApp(CONTAINER_NAME, CONTAINER_TAG, USERNAME, HTTP_PORT, ENV_NAME)
             }
         }
-
     } finally {
         deleteDir()
         sendEmail(EMAIL_RECIPIENTS)
@@ -120,7 +118,7 @@ def runApp(containerName, tag, dockerHubUser, httpPort, envName) {
 
          docker run -d \
          --name $containerName \
-         -p $httpPort:$httpPort \
+         -p $httpPort:8080 \
          -e SPRING_PROFILES_ACTIVE=$envName \
          $image
      """
