@@ -40,7 +40,7 @@ node {
         }
 
         stage('Image Build') {
-            imageBuild(CONTAINER_NAME, CONTAINER_TAG, USERNAME)
+            imageBuild(CONTAINER_NAME, CONTAINER_TAG)
         }
 
         stage('Push to Docker Registry') {
@@ -49,11 +49,11 @@ node {
                                               passwordVariable: 'PASSWORD')]) {
 
                 sh '''
-                echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
+                    echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
                 '''
 
                 sh '''
-                docker push $USERNAME/''' + CONTAINER_NAME + ':' + CONTAINER_TAG + '''
+                    docker push $USERNAME/''' + CONTAINER_NAME + ':' + CONTAINER_TAG + '''
                 '''
             }
         }
@@ -84,12 +84,9 @@ def imagePrune(containerName) {
 }
 
 
-def imageBuild(containerName, tag, dockerHubUser) {
-    def image = "${dockerHubUser}/${containerName}:${tag}"
-
+def imageBuild(containerName, tag) {
+    def image = "${containerName}:${tag}"
     sh "docker build -t $image --pull --no-cache ."
-
-    echo "Image built: $image"
 }
 
 def pushToImage(containerName, tag, dockerUser, dockerPassword) {
