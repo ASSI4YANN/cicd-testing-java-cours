@@ -50,9 +50,15 @@ node {
     }
 
         stage('Run App') {
-            withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                runApp(CONTAINER_NAME, CONTAINER_TAG, USERNAME, HTTP_PORT, ENV_NAME)
+            withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials',
+                                              usernameVariable: 'USERNAME',
+                                              passwordVariable: 'PASSWORD')]) {
 
+                sh '''
+                    echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
+                '''
+
+                runApp(CONTAINER_NAME, CONTAINER_TAG, USERNAME, HTTP_PORT, ENV_NAME)
             }
         }
 
