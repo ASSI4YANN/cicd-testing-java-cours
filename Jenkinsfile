@@ -40,7 +40,12 @@ node {
         }
 
         stage('Image Build') {
-            imageBuild(CONTAINER_NAME, CONTAINER_TAG)
+            withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials',
+                                              usernameVariable: 'USERNAME',
+                                              passwordVariable: 'PASSWORD')]) {
+
+                sh "docker build -t $USERNAME/$CONTAINER_NAME:$CONTAINER_TAG ."
+            }
         }
 
         stage('Push to Docker Registry') {
