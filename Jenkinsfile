@@ -84,7 +84,7 @@ def imagePrune(containerName) {
 }
 
 
- imageBuild(containerName, tag, dockerHubUser) {
+def imageBuild(containerName, tag, dockerHubUser) {
     def image = "${dockerHubUser}/${containerName}:${tag}"
 
     sh "docker build -t $image --pull --no-cache ."
@@ -125,6 +125,7 @@ def runApp(containerName, tag, dockerHubUser, httpPort, envName) {
 
      echo "Application started: $image on port $httpPort"
  }
+
 
 def sendEmail(recipients) {
     mail(
