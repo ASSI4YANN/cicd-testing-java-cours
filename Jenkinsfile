@@ -56,7 +56,7 @@ node {
                 '''
             }
         }
-    }
+
 
         stage('Run App') {
             withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials',
@@ -65,7 +65,7 @@ node {
 
                 runApp(CONTAINER_NAME, CONTAINER_TAG, USERNAME, HTTP_PORT, ENV_NAME)
             }
-        }
+
 
     } finally {
         deleteDir()
