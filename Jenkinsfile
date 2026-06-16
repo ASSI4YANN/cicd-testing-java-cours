@@ -1,32 +1,33 @@
 def ENV_NAME = getEnvName(env.BRANCH_NAME)
-def CONTAINER_NAME = "calculator-" +ENV_NAME
+def CONTAINER_NAME = "calculator-" + ENV_NAME
 def CONTAINER_TAG = getTag(env.BUILD_NUMBER, env.BRANCH_NAME)
 def HTTP_PORT = getHTTPPort(env.BRANCH_NAME)
 def EMAIL_RECIPIENTS = "nassiyannjunior@gmail.com"
 
-
 node {
     try {
-        stage('Initialize') {  /* stage répresente une étape du pipeline */
+
+        stage('Initialize') {
             def dockerHome = tool 'dockerlatest'
             def mavenHome = tool 'mavenlatest'
             env.PATH = "${dockerHome}/bin:${mavenHome}/bin:${env.PATH}"
         }
 
-        stage('Checkout') {  /*Etape de vérification des différente branche du projet*/
+        stage('Checkout') {
             checkout scm
         }
 
         stage('Build with test') {
-                sh "mvn clean install"
+            sh "mvn clean install"
         }
 
         stage('Sonarqube Analysis') {
             withSonarQubeEnv('localhost_sonarqube') {
-                sh " mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
+                sh "mvn sonar:sonar -Dintegration-tests.skip=true -Dmaven.test.failure.ignore=true"
             }
+
             timeout(time: 1, unit: 'MINUTES') {
-                def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+                def qg = waitForQualityGate()
                 if (qg.status != 'OK') {
                     error "Pipeline aborted due to quality gate failure: ${qg.status}"
                 }
@@ -36,7 +37,6 @@ node {
         stage("Image Prune") {
             imagePrune(CONTAINER_NAME)
         }
-
 
         stage('Image Build') {
             imageBuild(CONTAINER_NAME, CONTAINER_TAG, USERNAME)
@@ -57,7 +57,6 @@ node {
             }
         }
 
-
         stage('Run App') {
             withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials',
                                               usernameVariable: 'USERNAME',
@@ -65,90 +64,10 @@ node {
 
                 runApp(CONTAINER_NAME, CONTAINER_TAG, USERNAME, HTTP_PORT, ENV_NAME)
             }
-
+        }
 
     } finally {
         deleteDir()
-        sendEmail(EMAIL_RECIPIENTS);
+        sendEmail(EMAIL_RECIPIENTS)
     }
-
-}
-
-def imagePrune(containerName) {
-    try {
-            sh "docker image prune -f"
-            sh "docker stop $containerName"
-    } catch (ignored) {
-    }
-}
-
-
- imageBuild(containerName, tag, dockerHubUser) {
-    def image = "${dockerHubUser}/${containerName}:${tag}"
-
-    sh "docker build -t $image --pull --no-cache ."
-
-    echo "Image built: $image"
-}
-
-def pushToImage(containerName, tag, dockerUser, dockerPassword) {
-
-    def image = "${dockerUser}/${containerName}:${tag}"
-
-    sh """
-        echo "$dockerPassword" | docker login -u "$dockerUser" --password-stdin
-    """
-
-    sh """
-        docker push $image
-    """
-
-    echo "Image push complete: $image"
-}
-
-def runApp(containerName, tag, dockerHubUser, httpPort, envName) {
-
-     def image = "${dockerHubUser}/${containerName}:${tag}"
-
-     sh "docker pull $image"
-
-     sh """
-         docker rm -f $containerName || true
-
-         docker run -d \
-         --name $containerName \
-         -p $httpPort:$httpPort \
-         -e SPRING_PROFILES_ACTIVE=$envName \
-         $image
-     """
-
-     echo "Application started: $image on port $httpPort"
- }
-
-def sendEmail(recipients) {
-    mail(
-            to: recipients,
-            subject: "Build ${env.BUILD_NUMBER} - ${currentBuild.currentResult} - (${currentBuild.fullDisplayName})",
-            body: "Check console output at: ${env.BUILD_URL}/console" + "\n")
-}
-
-String getEnvName(String branchName) {
-    if (branchName == 'main') {
-        return 'prod'
-    }
-    return (branchName == 'develop') ? 'uat' : 'dev'
-}
-
-String getHTTPPort(String branchName) {
-    if (branchName == 'main') {
-        return '9003'
-    }
-    return (branchName == 'develop') ? '9002' : '9001'
-}
-
-String getTag(String buildNumber, String branchName) {
-    if (branchName == 'main') {
-        return buildNumber + '-unstable'
-    }
-    return buildNumber + '-stable'
 }
