@@ -135,7 +135,7 @@ def sendEmail(recipients) {
 }
 
 String getEnvName(String branchName) {
-    if (branchName == 'main') {
+    if (branchName == 'master') {
         return 'prod'
     }
     return (branchName == 'develop') ? 'uat' : 'dev'
